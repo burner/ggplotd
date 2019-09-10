@@ -454,3 +454,22 @@ unittest
     gg = scale!("y")("log10").putIn(gg);
     gg.save( "logScale.png" );
 }
+
+/// OHLC scale
+unittest
+{
+    import std.range : zip;
+    import std.algorithm : map;
+    import ggplotd.aes : aes;
+    import ggplotd.scale : scale;
+    import ggplotd.ggplotd : GGPlotD, putIn;
+    import ggplotd.geom : geomOHLC;
+
+    // http://blackedder.github.io/ggplotd/images/logScale.png
+    auto gg = zip([1.0, 10.0, 15], [30, 100, 1000.0])
+        .map!((a) => aes!("x", "y")(a[0], a[1]))
+        .geomOHLC
+        .putIn(GGPlotD());
+
+    gg.save( "ohlc.png" );
+}

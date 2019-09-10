@@ -352,6 +352,89 @@ unittest
     assert(gl.empty);
 }
 
+template geomOHLC(AES)
+{
+    import std.algorithm : map;
+    import std.range : array, zip;
+
+    import ggplotd.range : mergeRange;
+    struct VolderMort 
+    {
+        this(AES aes)
+        {
+            groupedAes = DefaultValues.mergeRange(aes).group;
+        }
+
+        @property auto front()
+        {
+            import ggplotd.aes : aes;
+            import ggplotd.guide : GuideToColourFunction, GuideToDoubleFunction;
+            auto coordsZip = groupedAes.front
+                .map!((a) => aes!("x","y")(a.x, a.y));
+
+            immutable flags = groupedAes.front.front;
+            immutable f = delegate(cairo.Context context, 
+                 in GuideToDoubleFunction xFunc, in GuideToDoubleFunction yFunc,
+                 in GuideToColourFunction cFunc, in GuideToDoubleFunction sFunc ) {
+
+                import std.math : isFinite;
+                auto coords = coordsZip.save;
+                auto fr = coords.front;
+                context.moveTo(
+                    xFunc(fr.x, flags.fieldWithDefault!("scale")(true)), 
+                    yFunc(fr.y, flags.fieldWithDefault!("scale")(true)));
+                coords.popFront;
+                foreach (tup; coords)
+                {
+                    auto x = xFunc(tup.x, flags.fieldWithDefault!("scale")(true));
+                    auto y = yFunc(tup.y, flags.fieldWithDefault!("scale")(true));
+                    // TODO should we actually move to next coordinate here?
+                    if (isFinite(x) && isFinite(y))
+                    {
+						//                x, y, x-width, y-height
+                        context.rectangle(x, y, 1, 200);
+                        context.lineWidth = 2.0*flags.size;
+                    } else {
+                        context.newSubPath();
+                    }
+                }
+
+                auto col = cFunc(flags.colour);
+                context.fillAndStroke( col, flags.fill, flags.alpha );
+                return context;
+            };
+
+
+            auto geom = Geom(groupedAes.front.front);
+            foreach (tup; coordsZip)
+            {
+                geom.xStore.put(tup.x);
+                geom.yStore.put(tup.y);
+            }
+            geom.draw = f;
+            return geom;
+        }
+
+        void popFront()
+        {
+            groupedAes.popFront;
+        }
+
+        @property bool empty()
+        {
+            return groupedAes.empty;
+        }
+
+    private:
+        typeof(group(DefaultValues.mergeRange(AES.init))) groupedAes;
+    }
+
+    auto geomOHLC(AES aes)
+    {
+        return VolderMort(aes);
+    }
+}
+
 /// Create lines from data 
 template geomLine(AES)
 {
