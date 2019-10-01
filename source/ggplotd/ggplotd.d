@@ -539,6 +539,7 @@ private:
     Legend[] legends;
 }
 
+/+
 unittest
 {
     import std.range : zip;
@@ -770,6 +771,8 @@ unittest
     gg.save( "data.png" );
 }
 
++/
+
 import std.range : ElementType;
 
 /**
@@ -883,6 +886,8 @@ auto gridLayout( size_t length, double ratio )
     return Tuple!(int, int)( w.to!int, h.to!int );
 }
 
+/+
+
 unittest
 {
     import std.typecons : Tuple;
@@ -948,3 +953,4 @@ unittest
  
     gg.save( "shapes2.png", 300, 300 );
 }
++/

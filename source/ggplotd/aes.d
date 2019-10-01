@@ -82,6 +82,7 @@ assert(aes!("x", "y")(1.0, 2.0) == Tuple!(double, "x", double, "y")(1.0, 2.0));
     +/
 alias aes = tuple;
 
+/+
 unittest
 {
     struct Diamond 
@@ -130,6 +131,7 @@ unittest
     assertEqual(points.front.x, 1);
     assertEqual(points.front.y, 3);
 }
++/
 
 // TODO Also update default grouping if appropiate
 /// Default values for most settings
@@ -285,6 +287,8 @@ template Aes(Specs...)
     }
 }
 
+/+
+
 /// Basic Aes usage
 unittest
 {
@@ -309,6 +313,7 @@ unittest
     assertEqual(aes3.empty, true);
 }
 
++/
 
 import std.typetuple : TypeTuple;
 private template fieldValues( T, Specs... )
@@ -324,6 +329,8 @@ private template fieldValues( T, Specs... )
     }
 }
 
+/+
+
 unittest 
 {
     struct Point { double x; double y; string label = "Point"; }
@@ -337,6 +344,8 @@ unittest
     assertEqual(fv2[1], "Point");
 }
 
++/
+
 private template typeAndFields( T, Specs... )
 {
     import std.meta : AliasSeq;
@@ -347,6 +356,8 @@ private template typeAndFields( T, Specs... )
             typeof(__traits(getMember, T, Specs[0])), 
             Specs[0], typeAndFields!(T, Specs[1..$]) );
 }
+
+/+
 
 unittest 
 {
@@ -359,7 +370,9 @@ unittest
     assertEqual(tp.x, 1.0);
     assertEqual(tp.y, 2.0);
     assertEqual(tp.label, "Point");
- }
+}
+
++/
 
 // Default fields to group by
 alias DefaultGroupFields = TypeTuple!("alpha","colour","label");
@@ -394,6 +407,8 @@ template group(Specs...)
         return aes.groupBy!((a) => extractKey(a)).values;
     }
 }
+
+/+
 
 ///
 unittest
@@ -430,6 +445,8 @@ unittest
     grouped.popFront;
     assertEqual(totalLength + grouped.front.walkLength, 3);
 }
+
++/
 
 import std.range : isInputRange;
 
@@ -497,6 +514,8 @@ private template aesFields(T)
     enum aesFields = Filter!(isAesField, __traits(allMembers, T));
 }
 
+/+
+
 unittest
 {
     struct Point { double x; double y; string label = "Point"; }
@@ -511,6 +530,8 @@ unittest
     assertEqual( "label", aesFields!(typeof(pnt2))[2] );
     assertEqual( 3, aesFields!(typeof(pnt2)).length );
 }
+
++/
 
 package template hasAesField(T, alias name)
 {

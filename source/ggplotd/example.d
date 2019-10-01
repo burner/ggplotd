@@ -10,6 +10,8 @@ version (unittest)
 import dunit.toolkit;
 import std.stdio : writeln;
 
+/+
+
 ///
 unittest
 {
@@ -455,6 +457,8 @@ unittest
     gg.save( "logScale.png" );
 }
 
++/
+
 /// OHLC scale
 unittest
 {
@@ -465,9 +469,15 @@ unittest
     import ggplotd.ggplotd : GGPlotD, putIn;
     import ggplotd.geom : geomOHLC;
 
-    // http://blackedder.github.io/ggplotd/images/logScale.png
-    auto gg = zip([1.0, 10.0, 15], [30, 100, 1000.0])
-        .map!((a) => aes!("x", "y")(a[0], a[1]))
+    // http://blackedder.github.io/ggplotd/images/ohlc.png
+
+    auto gg = zip(
+			[20.0, 100.0, 1000], 
+			[30, 120, 1010.0], 
+			[12.0, 90, 950],
+			[18.0, 115, 800]
+		)
+        .map!((a) => aes!("o", "h", "l", "c")(a[0], a[1], a[2], a[3]))
         .geomOHLC
         .putIn(GGPlotD());
 
