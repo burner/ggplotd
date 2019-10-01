@@ -14,7 +14,7 @@ version (unittest)
 
 version (assert)
 {
-    import std.stdio : writeln;
+    import std.stdio : writeln, writefln;
 }
 
 /// Hold the data needed to draw to a plot context
@@ -352,87 +352,52 @@ unittest
     assert(gl.empty);
 }
 
-template geomOHLC(AES)
+auto geomOHLC(AES)(AES aesRange)
 {
-    import std.algorithm : map;
-    import std.range : array, zip;
-
+    import std.algorithm : filter, map, joiner;
+    import std.array : array;
+    import std.conv : to;
+	import std.math : abs;
+    import std.range : Appender, walkLength, ElementType;
+    import std.typecons : Tuple;
+    import ggplotd.aes : aes, hasAesField;
     import ggplotd.range : mergeRange;
-    struct VolderMort 
-    {
-        this(AES aes)
-        {
-            groupedAes = DefaultValues.mergeRange(aes).group;
-        }
 
-        @property auto front()
-        {
-            import ggplotd.aes : aes;
-            import ggplotd.guide : GuideToColourFunction, GuideToDoubleFunction;
-            auto coordsZip = groupedAes.front
-                .map!((a) => aes!("x","y")(a.x, a.y));
+    Appender!(Geom[]) result;
 
-            immutable flags = groupedAes.front.front;
-            immutable f = delegate(cairo.Context context, 
-                 in GuideToDoubleFunction xFunc, in GuideToDoubleFunction yFunc,
-                 in GuideToColourFunction cFunc, in GuideToDoubleFunction sFunc ) {
+    // TODO if x (y in the original aesRange) is numerical then this should relly scale 
+    // by the range
+    double delta = 0.2;
 
-                import std.math : isFinite;
-                auto coords = coordsZip.save;
-                auto fr = coords.front;
-                context.moveTo(
-                    xFunc(fr.x, flags.fieldWithDefault!("scale")(true)), 
-                    yFunc(fr.y, flags.fieldWithDefault!("scale")(true)));
-                coords.popFront;
-                foreach (tup; coords)
-                {
-                    auto x = xFunc(tup.x, flags.fieldWithDefault!("scale")(true));
-                    auto y = yFunc(tup.y, flags.fieldWithDefault!("scale")(true));
-                    // TODO should we actually move to next coordinate here?
-                    if (isFinite(x) && isFinite(y))
-                    {
-						//                x, y, x-width, y-height
-                        context.rectangle(x, y, 1, 200);
-                        context.lineWidth = 2.0*flags.size;
-                    } else {
-                        context.newSubPath();
-                    }
-                }
+	auto theLines = aesRange
+		.map!(it => 
+			[ aes!("x", "y")(it.x.to!string(), cast(double)it.l)
+			, aes!("x", "y")(it.x.to!string(), cast(double)it.h)
+			])
+		.map!(pair => pair.geomLine)
+		.joiner;
 
-                auto col = cFunc(flags.colour);
-                context.fillAndStroke( col, flags.fill, flags.alpha );
-                return context;
-            };
+	result.put(theLines);
 
+	auto theBoxes = aesRange
+		.map!(it => aes!("x", "y", "height", "width", "colour", "fill")(
+				it.x, 
+				(it.o < it.c ? it.o : it.c) + abs(it.c - it.o) / 2,
+				it.c > it.o ? it.c - it.o : it.o - it.c,
+				2 * delta,
+				it.c > it.o ? "green" : "red",
+				1.0)
+			)
+		.map!(it => geomRectangle([it]))
+		.joiner
+		.array;
 
-            auto geom = Geom(groupedAes.front.front);
-            foreach (tup; coordsZip)
-            {
-                geom.xStore.put(tup.x);
-                geom.yStore.put(tup.y);
-            }
-            geom.draw = f;
-            return geom;
-        }
-
-        void popFront()
-        {
-            groupedAes.popFront;
-        }
-
-        @property bool empty()
-        {
-            return groupedAes.empty;
-        }
-
-    private:
-        typeof(group(DefaultValues.mergeRange(AES.init))) groupedAes;
-    }
-
-    auto geomOHLC(AES aes)
-    {
-        return VolderMort(aes);
-    }
+	//auto boxesToPut = geomRectangle(theBoxes);
+	theBoxes.front.xStore.put(aesRange.front.x, 2*delta);
+	theBoxes.front.xStore.put(aesRange.front.x, -2*delta);
+	result.put(theBoxes);
+    
+    return result.data;
 }
 
 /// Create lines from data 
@@ -854,7 +819,7 @@ auto geomBox(AES)(AES aesRange)
             auto myAes = aesRange;
         }
     }
-    
+
     // TODO if x (y in the original aesRange) is numerical then this should relly scale 
     // by the range
     double delta = 0.2;

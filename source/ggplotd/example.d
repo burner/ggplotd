@@ -462,6 +462,7 @@ unittest
 /// OHLC scale
 unittest
 {
+	import std.datetime : DateTime;
     import std.range : zip;
     import std.algorithm : map;
     import ggplotd.aes : aes;
@@ -472,14 +473,21 @@ unittest
     // http://blackedder.github.io/ggplotd/images/ohlc.png
 
     auto gg = zip(
-			[20.0, 100.0, 1000], 
-			[30, 120, 1010.0], 
-			[12.0, 90, 950],
-			[18.0, 115, 800]
+			[ DateTime(2019,9,1,12,00).toISOExtString() // x
+			, DateTime(2019,9,1,13,00).toISOExtString()
+			, DateTime(2019,9,1,14,00).toISOExtString()
+			, DateTime(2019,9,1,15,00).toISOExtString()
+			],
+			[20.0, 100.0, 200, 150], // o
+			[30, 120, 201.0, 200], // h
+			[12.0, 90, 80, 55], // l 
+			[18.0, 115, 95, 75] // c
 		)
-        .map!((a) => aes!("o", "h", "l", "c")(a[0], a[1], a[2], a[3]))
+        .map!((a) => aes!("x", "o", "h", "l", "c")(a[0], a[1], a[2], a[3], a[4]))
         .geomOHLC
         .putIn(GGPlotD());
+
+	gg.put( xaxisLabelAngle( 1.57 ) );
 
     gg.save( "ohlc.png" );
 }
