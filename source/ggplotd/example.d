@@ -470,8 +470,10 @@ unittest
     import std.algorithm : map;
     import ggplotd.aes : aes;
     import ggplotd.scale : scale;
-    import ggplotd.ggplotd : GGPlotD, putIn;
+    import ggplotd.ggplotd : GGPlotD, putIn, Margins;
     import ggplotd.geom : geomOHLC;
+    import ggplotd.axes : xaxisLabel, yaxisLabel, xaxisOffset, yaxisOffset, 
+		   xaxisRange, yaxisRange, xaxisLabelAngle;
 
     // http://blackedder.github.io/ggplotd/images/ohlc.png
 
@@ -490,7 +492,9 @@ unittest
         .geomOHLC
         .putIn(GGPlotD());
 
-	gg.put( xaxisLabelAngle( 1.57 ) );
+	gg.put( xaxisLabelAngle(90) );
+    //gg.put( xaxisOffset( 0 ) ).put( yaxisOffset( 0 ) );
+    // change offset
 
     gg.save( "ohlc.png" );
 }
