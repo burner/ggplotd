@@ -10,8 +10,6 @@ version (unittest)
 import dunit.toolkit;
 import std.stdio : writeln;
 
-/+
-
 ///
 unittest
 {
@@ -459,8 +457,6 @@ unittest
     gg = scale!("y")("log10").putIn(gg);
     gg.save( "logScale.png" );
 }
-
-+/
 
 /// OHLC scale
 unittest
